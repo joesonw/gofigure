@@ -7,5 +7,4 @@ import (
 var All = []gofigure.Feature{
 	Template(),
 	Reference(),
-	Reference(),
 }
