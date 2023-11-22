@@ -1,5 +1,8 @@
 # GoFigure - a simple yet powerful and extensible configuration library for Golang
 
+[![Coverage Status](https://coveralls.io/repos/github/joesonw/gofigure/badge.svg?branch=master)](https://coveralls.io/github/joesonw/gofigure?branch=master)
+[![Go Reference](https://pkg.go.dev/badge/github.com/joesonw/gofigure.svg)](https://pkg.go.dev/github.com/joesonw/gofigure)
+
 ## Example
 `config/app.yaml`
 ```yaml
