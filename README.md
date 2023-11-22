@@ -1,5 +1,8 @@
 # GoFigure - a simple yet powerful and extensible configuration library for Golang
 
+
+[![Lint Status](https://img.shields.io/github/actions/workflow/status/joesonw/gofigure/golangci-lint.yml?branch=master&label=lint&style=flat-square&color=75C46B)](https://github.com/joesonw/gofigure/actions/workflows/golangci-lint.yml)
+[![Test Status](https://img.shields.io/github/actions/workflow/status/joesonw/gofigure/gotest.yml?branch=master&label=test&style=flat-square&color=75C46B)](https://github.com/joesonw/gofigure/actions/workflows/gotest.yml)
 [![Coverage Status](https://coveralls.io/repos/github/joesonw/gofigure/badge.svg?branch=master)](https://coveralls.io/github/joesonw/gofigure?branch=master)
 [![Go Reference](https://pkg.go.dev/badge/github.com/joesonw/gofigure.svg)](https://pkg.go.dev/github.com/joesonw/gofigure)
 
