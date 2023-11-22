@@ -17,6 +17,11 @@ listen: !tpl |
 db_host: !ref storage.db.host
 database: !tpl |
   mysql://{{ config "storage.db.user" }}:{{ config "storage.db.password" }}@{{ config "storage.db.host" }}:{{ config "storage.db.port" }}
+external: !include
+  file:
+    path: external/test.yaml
+    parse: true
+    key: value
 ```
 
 `config/storage/db.yaml`
@@ -38,27 +43,38 @@ host: remote-address
 password: supersecret
 ```
 
+`config/external/test.yaml`
+```yaml
+value: hello world
+```
+
 `main.go`
 ```go
 var defaultYaml []byte // config/app.yaml
 var envYaml []byte // config/prod/app.yaml
-var defaultDbYaml []byte // config/db.yaml
-var envDbYaml []byte // config/prod/db.yaml
+var defaultDbYaml []byte // config/storage/db.yaml
+var envDbYaml []byte // config/prod/storage/db.yaml
 
-loader := gofigure.New().WithFeatures(feature.All...) // or you can manually pick individual features and with options
+loader := gofigure.New().WithFeatures(
+	feature.Reference(),
+    feature.Template()/*.WithFuncs(template.Funcs{}).WithValeus(map[stirng]any{}) */,
+	feature.Include()
+)
 _ = loader.Load("app.yaml", defaultYaml)
 _ = loader.Load("storage/db.yaml", defaultDbYaml)
 _ = loader.Load("app.yaml", envYaml)
 _ = loader.Load("storage/db.yaml", envDbYaml)
 var app struct {
-	Env string yaml "env"
-	Listen string yaml "listen"
-	Database string 
+    Env      string `yaml:"env"`
+    Listen   string `yaml:"listen"`
+    Database string `yaml:"database"`
+    External string `yaml:"external"`
 }
 _ = loader.Get(context.Background(), "app", &app)
 fmt.Println(app.Env) // prod
 fmt.Println(app.Listen) // localhost:80
 fmt.Println(app.Database) // mysql://root:supersecret@remote-address:3306
+fmt.Println(app.External) // hello world 
 ```
 
 ## Introduction

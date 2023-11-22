@@ -1,0 +1,13 @@
+env: dev
+port: 8080
+host: localhost
+listen: !tpl |
+  {{ config "app.host" }}:{{ config "app.port" }}
+db_host: !ref storage.db.host
+database: !tpl |
+  mysql://{{ config "storage.db.user" }}:{{ config "storage.db.password" }}@{{ config "storage.db.host" }}:{{ config "storage.db.port" }}
+external: !include
+  file:
+    path: external/test.yaml
+    parse: true
+    key: value
