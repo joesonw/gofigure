@@ -58,7 +58,7 @@ var envDbYaml []byte // config/prod/storage/db.yaml
 loader := gofigure.New().WithFeatures(
 	feature.Reference(),
     feature.Template()/*.WithFuncs(template.Funcs{}).WithValeus(map[stirng]any{}) */,
-	feature.Include()
+	feature.Include(os.DirFS("./config")),
 )
 _ = loader.Load("app.yaml", defaultYaml)
 _ = loader.Load("storage/db.yaml", defaultDbYaml)
