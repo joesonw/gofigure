@@ -81,31 +81,47 @@ func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 		return nil, fmt.Errorf("no file contains path %q: %w", path, ErrPathNotFound)
 	}
 
-	for file := range l.loadedFiles { // in case required nested key is in another file not resolved yet
-		filePath := strings.ReplaceAll(file, string(filepath.Separator), ".")
-		if strings.HasPrefix(path, filePath) {
-			fileNode, err := l.root.GetDeep(filePath)
-			if err != nil {
-				return nil, err
-			}
-			if !fileNode.resolved {
-				if _, err = l.resolve(ctx, fileNode); err != nil {
+	current := l.root
+	if len(path) > 0 {
+		paths, err := parseDotPath(path)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse path %q: %w", path, err)
+		}
+
+		for _, p := range paths {
+			if p.key != "" { // map
+				current, err = current.GetMappingChild(p.key)
+				if err != nil {
 					return nil, err
 				}
+			} else { // slice
+				current, err = current.GetSequenceChild(p.index)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if current == nil {
+				break
+			}
+
+			if !current.resolved {
+				current, err = l.resolve(ctx, current)
+				if err != nil {
+					return nil, err
+				}
+			}
+			if current == nil {
+				break
 			}
 		}
 	}
 
-	node, err := l.root.GetDeep(path)
-	if err != nil {
-		return nil, err
-	}
-
-	if node == nil {
+	if current == nil {
 		return nil, nil
 	}
 
-	return l.resolve(ctx, node)
+	return l.resolve(ctx, current)
 }
 
 func (l *Loader) resolve(ctx context.Context, node *Node) (result *Node, reterr error) {
