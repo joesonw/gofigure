@@ -13,14 +13,11 @@ import (
 type Loader struct {
 	features []Feature
 
-	root        *Node
-	loadedFiles map[string]bool
+	root *Node
 }
 
 func New() *Loader {
-	return &Loader{
-		loadedFiles: map[string]bool{},
-	}
+	return &Loader{}
 }
 
 func (l *Loader) WithFeatures(features ...Feature) *Loader {
@@ -37,9 +34,11 @@ func (l *Loader) Load(name string, contents []byte) error {
 		return fmt.Errorf("unable to unmarshal file %q: %w", name, errors.Join(err, ErrConfigParseError))
 	}
 
+	// root node is a document node, and the first child is a map holds all the values
 	fileNode := NewNode(yamlNode.Content[0], NodeFilepath(name))
 	name = strings.TrimSuffix(name, filepath.Ext(name))
 	names := strings.Split(name, string(filepath.Separator))
+	// nest the file with its path, e.g, config/app.yaml -> config.app
 	fileNode = PackNodeInNestedKeys(fileNode, names...)
 
 	if l.root == nil {
@@ -52,7 +51,6 @@ func (l *Loader) Load(name string, contents []byte) error {
 		l.root = newNode
 	}
 
-	l.loadedFiles[name] = true
 	return nil
 }
 
@@ -68,19 +66,6 @@ func (l *Loader) Get(ctx context.Context, path string, target any) error {
 }
 
 func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
-	checkFile := strings.ReplaceAll(path, ".", string(filepath.Separator))
-	loaded := false
-	for file := range l.loadedFiles {
-		if strings.HasPrefix(checkFile, file) {
-			loaded = true
-			break
-		}
-	}
-
-	if !loaded {
-		return nil, fmt.Errorf("no file contains path %q: %w", path, ErrPathNotFound)
-	}
-
 	current := l.root
 	if len(path) > 0 {
 		paths, err := parseDotPath(path)
@@ -105,12 +90,12 @@ func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 				break
 			}
 
-			if !current.resolved {
-				current, err = l.resolve(ctx, current)
-				if err != nil {
-					return nil, err
-				}
+			// always try to resolve the node, so if it has resolvedNode, it will be used instead
+			current, err = l.resolve(ctx, current)
+			if err != nil {
+				return nil, err
 			}
+
 			if current == nil {
 				break
 			}
@@ -124,19 +109,24 @@ func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 	return l.resolve(ctx, current)
 }
 
-func (l *Loader) resolve(ctx context.Context, node *Node) (result *Node, reterr error) {
+func (l *Loader) resolve(ctx context.Context, node *Node) (resultNode *Node, reterr error) {
 	if node.resolved {
+		// if the node is resolved by tagged resolver, the result is stored in resolvedNode (so the original value can be preserved)
 		if node.resolvedNode != nil {
 			return node.resolvedNode, nil
 		}
 		return node, nil
 	}
+
+	// set it to true first to avoid infinite loop
 	node.resolved = true
 	defer func() {
 		if reterr != nil {
 			node.resolved = false
 		}
 	}()
+
+	// resolve children first for mapping and sequence nodes
 
 	if node.kind == yaml.MappingNode {
 		for key := range node.mappingNodes {
@@ -158,10 +148,12 @@ func (l *Loader) resolve(ctx context.Context, node *Node) (result *Node, reterr 
 		}
 	}
 
+	// if not tagged, no further action is needed
 	if node.style&yaml.TaggedStyle == 0 {
 		return node, nil
 	}
 
+	// resolve the node with the feature if matched
 	for _, feature := range l.features {
 		if feature.Name() == node.tag {
 			result, err := feature.Resolve(ctx, l, node)
@@ -170,7 +162,7 @@ func (l *Loader) resolve(ctx context.Context, node *Node) (result *Node, reterr 
 				return nil, err
 			}
 			node.resolvedNode = result
-			return result, nil
+			return node, nil
 		}
 	}
 

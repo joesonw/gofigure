@@ -66,8 +66,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
-#    - depguard
     - dogsled
     - dupl
     - errcheck
@@ -75,11 +73,10 @@ linters:
     - funlen
     - gochecknoinits
     - goconst
-#    - gocritic # per https://github.com/golangci/golangci-lint/issues/3933
+    - gocritic # per https://github.com/golangci/golangci-lint/issues/3933
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - gomnd
     - goprintffuncname
     - gosec
@@ -91,16 +88,14 @@ linters:
     - nakedret
     - noctx
     - nolintlint
+    - revive
     - rowserrcheck
-    - scopelint
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
 
   # don't enable:
@@ -115,12 +110,14 @@ linters:
   # - nestif
   # - prealloc
   # - testpackage
-  # - revive
   # - wsl
 
 issues:
   # Excluding configuration per-path, per-linter, per-text and per-source
   exclude-rules:
+    - path: _test\.go
+      linters:
+        - revive
     - path: _test\.go
       linters:
         - gomnd

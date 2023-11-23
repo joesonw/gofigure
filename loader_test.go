@@ -16,7 +16,6 @@ name: John`))).To(BeNil())
 		Expect(loader.root.kind).To(Equal(yaml.MappingNode))
 		Expect(loader.root.mappingNodes["config"].mappingNodes["app"].mappingNodes["env"].value).To(Equal("dev"))
 		Expect(loader.root.mappingNodes["config"].mappingNodes["app"].mappingNodes["name"].value).To(Equal("John"))
-		Expect(loader.loadedFiles["config/app"]).To(BeTrue())
 
 		Expect(loader.Load("config/app.yaml", []byte(`env: test`))).To(BeNil())
 		Expect(loader.root.mappingNodes["config"].mappingNodes["app"].mappingNodes["env"].value).To(Equal("test"))
@@ -25,7 +24,6 @@ name: John`))).To(BeNil())
 		Expect(loader.Load("another.yaml", []byte(`value: another`))).To(BeNil())
 		Expect(loader.root.kind).To(Equal(yaml.MappingNode))
 		Expect(loader.root.mappingNodes["another"].mappingNodes["value"].value).To(Equal("another"))
-		Expect(loader.loadedFiles["another"]).To(BeTrue())
 	})
 
 	It("should Get", func() {
@@ -43,4 +41,14 @@ name: John`))).To(BeNil())
 		Expect(value).To(Equal(789))
 	})
 
+	It("should preserve original value of tagged node", func() {
+		loader := New().WithFeatures(FeatureFunc("!test", func(ctx context.Context, loader *Loader, node *Node) (*Node, error) {
+			return NewScalarNode("hello world"), nil
+		}))
+		Expect(loader.Load("app.yaml", []byte(`value: !test origin`))).To(BeNil())
+		var value string
+		Expect(loader.Get(context.Background(), "app.value", &value)).To(BeNil())
+		Expect(value).To(Equal("hello world"))
+		Expect(loader.root.mappingNodes["app"].mappingNodes["value"].value).To(Equal("origin"))
+	})
 })

@@ -128,7 +128,7 @@ func (n *Node) GetSequenceChild(index int) (*Node, error) {
 }
 
 func (n *Node) GetDeep(path string) (*Node, error) {
-	if len(path) == 0 {
+	if path == "" {
 		return n, nil
 	}
 
@@ -260,6 +260,13 @@ func (n *Node) Style() yaml.Style {
 }
 
 func (n *Node) Value() string {
+	if n.resolved && n.resolvedNode != nil {
+		return n.resolvedNode.Value()
+	}
+	return n.value
+}
+
+func (n *Node) RawValue() string {
 	return n.value
 }
 

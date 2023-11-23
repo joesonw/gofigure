@@ -12,7 +12,7 @@ import (
 
 var _ = Describe("All Realworld Tests", func() {
 	It("should resolve after load (can reference  another file)", func() {
-		loader := gofigure.New().WithFeatures(feature.All...)
+		loader := gofigure.New().WithFeatures(feature.Reference(), feature.Template())
 		Expect(loader.Load("app.yaml", []byte(`env: dev
 port: 8080
 host: localhost

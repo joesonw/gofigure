@@ -12,7 +12,7 @@ type getPathPart struct {
 
 //nolint:gocyclo
 func parseDotPath(path string) ([]*getPathPart, error) {
-	if len(path) == 0 {
+	if path == "" {
 		return nil, nil
 	}
 	var paths []*getPathPart
