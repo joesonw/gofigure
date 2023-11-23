@@ -2,11 +2,11 @@ package gofigure
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 
-	"go.uber.org/multierr"
 	"gopkg.in/yaml.v3"
 )
 
@@ -34,7 +34,7 @@ func (l *Loader) Load(name string, contents []byte) error {
 
 	var yamlNode yaml.Node
 	if err := yaml.Unmarshal(contents, &yamlNode); err != nil {
-		return fmt.Errorf("unable to unmarshal file %q: %w", name, multierr.Combine(err, ErrConfigParseError))
+		return fmt.Errorf("unable to unmarshal file %q: %w", name, errors.Join(err, ErrConfigParseError))
 	}
 
 	fileNode := NewNode(yamlNode.Content[0], NodeFilepath(name))
@@ -47,7 +47,7 @@ func (l *Loader) Load(name string, contents []byte) error {
 	} else {
 		newNode, err := mergeToNode(l.root, fileNode)
 		if err != nil {
-			return fmt.Errorf("unable to merge file %q: %w", name, multierr.Combine(err, ErrConfigParseError))
+			return fmt.Errorf("unable to merge file %q: %w", name, errors.Join(err, ErrConfigParseError))
 		}
 		l.root = newNode
 	}

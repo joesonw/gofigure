@@ -6,7 +6,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.13.1
 	github.com/onsi/gomega v1.30.0
 	github.com/psanford/memfs v0.0.0-20230130182539-4dbf7e3e865e
-	go.uber.org/multierr v1.11.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

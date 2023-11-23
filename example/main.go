@@ -17,10 +17,10 @@ var defaultYaml []byte
 var envYaml []byte
 
 //go:embed config/storage/db.yaml
-var defaultDbYaml []byte
+var defaultDBYaml []byte
 
 //go:embed config/prod/storage/db.yaml
-var envDbYaml []byte
+var envDBYaml []byte
 
 func main() {
 	loader := gofigure.New().WithFeatures(
@@ -29,9 +29,9 @@ func main() {
 		feature.Include(os.DirFS("./config")),
 	)
 	die(loader.Load("app.yaml", defaultYaml))
-	die(loader.Load("storage/db.yaml", defaultDbYaml))
+	die(loader.Load("storage/db.yaml", defaultDBYaml))
 	die(loader.Load("app.yaml", envYaml))
-	die(loader.Load("storage/db.yaml", envDbYaml))
+	die(loader.Load("storage/db.yaml", envDBYaml))
 	var app struct {
 		Env      string `yaml:"env"`
 		Listen   string `yaml:"listen"`
