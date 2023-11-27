@@ -30,13 +30,17 @@ var _ = Describe("Merge", func() {
 	It("should merge", func() {
 		var nodeA yaml.Node
 		Expect(yaml.Unmarshal([]byte(`name: Doe
-tagged: value`), &nodeA)).To(BeNil())
+tagged: value
+map:
+  key: 123`), &nodeA)).To(BeNil())
 
 		var nodeB yaml.Node
 		Expect(yaml.Unmarshal([]byte(`realname: &realname John
 name: *realname
 tagged: !tagged override
-age: 123`), &nodeB)).To(BeNil())
+age: 123
+map: !replace
+  key2: 456`), &nodeB)).To(BeNil())
 		result, err := MergeNodes(NewNode(nodeA.Content[0]), NewNode(nodeB.Content[0]))
 		Expect(err).To(BeNil())
 
@@ -44,14 +48,19 @@ age: 123`), &nodeB)).To(BeNil())
 		Expect(err).To(BeNil())
 
 		var s struct {
-			Name   string `yaml:"name"`
-			Age    int    `yaml:"age"`
-			Tagged string `yaml:"tagged"`
+			Name   string         `yaml:"name"`
+			Age    int            `yaml:"age"`
+			Tagged string         `yaml:"tagged"`
+			Map    map[string]int `yaml:"map"`
 		}
 		Expect(yaml.Unmarshal(b, &s)).To(BeNil())
 		Expect(s.Name).To(Equal("John"))
 		Expect(s.Age).To(Equal(123))
 		Expect(s.Tagged).To(Equal("override"))
+		Expect(s.Map).To(And(
+			HaveLen(1),
+			HaveKeyWithValue("key2", 456),
+		))
 	})
 
 	It("should pack node in nested keys", func() {

@@ -53,4 +53,24 @@ test_value_simple:
 		Expect(complexValue.Name.Last).To(Equal("Doe"))
 		Expect(simpleValue).To(Equal("John"))
 	})
+
+	It("should work when files circular referencing", func() {
+		fs := memfs.New()
+		source := `first: !ref app.name.first`
+		Expect(fs.WriteFile("external.yaml", []byte(source), 0644)).To(BeNil())
+		loader := gofigure.New().WithFeatures(
+			feature.Include(fs),
+			feature.Reference(),
+		)
+		Expect(loader.Load("app.yaml", []byte(`name:
+  first: John
+value: !include
+  file:
+    path: external.yaml
+    parse: true
+    key: first`))).To(BeNil())
+		var value string
+		Expect(loader.Get(context.Background(), "app.value", &value)).To(BeNil())
+		Expect(value).To(Equal("John"))
+	})
 })
