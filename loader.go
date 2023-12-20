@@ -74,6 +74,9 @@ func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 		}
 
 		for _, p := range paths {
+			if current == nil {
+				break
+			}
 			if p.key != "" { // map
 				current, err = current.GetMappingChild(p.key)
 				if err != nil {
@@ -127,7 +130,6 @@ func (l *Loader) resolve(ctx context.Context, node *Node) (resultNode *Node, ret
 	}()
 
 	// resolve children first for mapping and sequence nodes
-
 	if node.kind == yaml.MappingNode {
 		for key := range node.mappingNodes {
 			childNode, err := l.resolve(ctx, node.mappingNodes[key])
