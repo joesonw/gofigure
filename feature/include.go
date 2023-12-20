@@ -66,16 +66,19 @@ func (f *includeFeature) Resolve(ctx context.Context, loader *gofigure.Loader, n
 		}
 
 		path := strings.TrimSpace(pathNode.Value())
-		contents, err := iofs.ReadFile(f.fs, path)
-		if err != nil {
-			return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
-		}
-
 		if !parse {
+			contents, err := iofs.ReadFile(f.fs, path)
+			if err != nil {
+				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
+			}
 			return gofigure.NewScalarNode(string(contents)), nil
 		}
 
 		if !f.loadedNodes[path] {
+			contents, err := iofs.ReadFile(f.fs, path)
+			if err != nil {
+				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
+			}
 			if err := loader.Load(path, contents); err != nil {
 				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to load file %q: %w", path, err))
 			}
