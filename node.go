@@ -212,6 +212,10 @@ func setNodeValueFromYAML(n *Node, node *yaml.Node) {
 }
 
 func (n *Node) ToYAMLNode() *yaml.Node {
+	if n.resolved && n.resolvedNode != nil {
+		return n.resolvedNode.ToYAMLNode()
+	}
+
 	var node yaml.Node
 	node.Kind = n.kind
 	node.Style = n.style
