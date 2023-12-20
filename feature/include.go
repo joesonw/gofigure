@@ -13,14 +13,16 @@ import (
 )
 
 type includeFeature struct {
-	fs          iofs.FS
-	loadedNodes map[string]bool
+	fs             iofs.FS
+	loadedContents map[string][]byte
+	loadedNodes    map[string]bool
 }
 
 func Include(fs iofs.FS) gofigure.Feature {
 	return &includeFeature{
-		fs:          fs,
-		loadedNodes: map[string]bool{},
+		fs:             fs,
+		loadedContents: map[string][]byte{},
+		loadedNodes:    map[string]bool{},
 	}
 }
 
@@ -28,6 +30,7 @@ func (*includeFeature) Name() string {
 	return "!include"
 }
 
+//nolint:gocyclo
 func (f *includeFeature) Resolve(ctx context.Context, loader *gofigure.Loader, node *gofigure.Node) (*gofigure.Node, error) {
 	if node.Kind() != yaml.MappingNode {
 		return nil, fmt.Errorf("!include requires a mapping node")
@@ -66,20 +69,21 @@ func (f *includeFeature) Resolve(ctx context.Context, loader *gofigure.Loader, n
 		}
 
 		path := strings.TrimSpace(pathNode.Value())
-		if !parse {
-			contents, err := iofs.ReadFile(f.fs, path)
+		contents, ok := f.loadedContents[path]
+		if !ok {
+			contents, err = iofs.ReadFile(f.fs, path)
 			if err != nil {
 				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
 			}
+			f.loadedContents[path] = contents
+		}
+
+		if !parse {
 			return gofigure.NewScalarNode(string(contents)), nil
 		}
 
 		if !f.loadedNodes[path] {
-			contents, err := iofs.ReadFile(f.fs, path)
-			if err != nil {
-				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
-			}
-			if err := loader.Load(path, contents); err != nil {
+			if err := loader.Load(path, f.loadedContents[path]); err != nil {
 				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to load file %q: %w", path, err))
 			}
 			f.loadedNodes[path] = true
