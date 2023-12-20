@@ -42,8 +42,14 @@ func MergeNodes(nodes ...*Node) (*Node, error) {
 func mergeToNode(n, another *Node) (*Node, error) {
 	var err error
 
+	shouldAppend := false
 	if another.style == yaml.TaggedStyle {
-		return another, nil
+		if another.tag != "!append" {
+			return another, nil
+		}
+		another.style = n.style
+		another.tag = ""
+		shouldAppend = true
 	}
 
 	if n.kind != another.kind {
@@ -67,7 +73,11 @@ func mergeToNode(n, another *Node) (*Node, error) {
 			}
 		}
 	case yaml.SequenceNode:
-		n.sequenceNodes = append(n.sequenceNodes, another.sequenceNodes...)
+		if shouldAppend {
+			n.sequenceNodes = append(n.sequenceNodes, another.sequenceNodes...)
+			return n, nil
+		}
+		return another, nil
 	case yaml.ScalarNode:
 		return another, nil
 	}

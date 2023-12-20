@@ -141,7 +141,6 @@ map: !replace
 		Expect(err).To(BeNil())
 
 		resultNode := result.ToYAMLNode()
-		Expect(err).To(BeNil())
 
 		resultBytes, err := yaml.Marshal(resultNode)
 		Expect(err).To(BeNil())
@@ -158,10 +157,40 @@ map: !replace
 		}
 		Expect(yaml.Unmarshal(resultBytes, &s)).To(BeNil())
 		Expect(s.Str).To(Equal("def"))
-		Expect(s.Array).To(Equal([]int{1, 2, 3}))
+		Expect(s.Array).To(Equal([]int{3}))
 		Expect(s.Map.A).To(Equal("abc"))
 		Expect(s.Map.B).To(BeEquivalentTo(456))
 		Expect(s.Map.C).To(Equal("def"))
-		Expect(s.Map.D).To(Equal([]string{"a", "b"}))
+		Expect(s.Map.D).To(Equal([]string{"b"}))
 	})
+
+	It("should only merge slices with append tag", func() {
+		a := `first:
+  - 1
+  - 2
+second:
+  - 'a'
+  - 'b'`
+		b := `first:
+  - 3
+second: !append
+  - 'c'`
+		var nodeA, nodeB yaml.Node
+		Expect(yaml.Unmarshal([]byte(a), &nodeA)).To(BeNil())
+		Expect(yaml.Unmarshal([]byte(b), &nodeB)).To(BeNil())
+		result, err := MergeNodes(NewNode(nodeA.Content[0]), NewNode(nodeB.Content[0]))
+		Expect(err).To(BeNil())
+		resultNode := result.ToYAMLNode()
+		resultBytes, err := yaml.Marshal(resultNode)
+		Expect(err).To(BeNil())
+
+		var s struct {
+			First  []int    `yaml:"first"`
+			Second []string `yaml:"second"`
+		}
+		Expect(yaml.Unmarshal(resultBytes, &s)).To(BeNil())
+		Expect(s.First).To(Equal([]int{3}))
+		Expect(s.Second).To(Equal([]string{"a", "b", "c"}))
+	})
+
 })

@@ -13,12 +13,14 @@ import (
 )
 
 type includeFeature struct {
-	fs iofs.FS
+	fs          iofs.FS
+	loadedNodes map[string]bool
 }
 
 func Include(fs iofs.FS) gofigure.Feature {
 	return &includeFeature{
-		fs: fs,
+		fs:          fs,
+		loadedNodes: map[string]bool{},
 	}
 }
 
@@ -73,8 +75,11 @@ func (f *includeFeature) Resolve(ctx context.Context, loader *gofigure.Loader, n
 			return gofigure.NewScalarNode(string(contents)), nil
 		}
 
-		if err := loader.Load(path, contents); err != nil {
-			return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to load file %q: %w", path, err))
+		if !f.loadedNodes[path] {
+			if err := loader.Load(path, contents); err != nil {
+				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to load file %q: %w", path, err))
+			}
+			f.loadedNodes[path] = true
 		}
 
 		dotPath := filepath.Clean(path)
