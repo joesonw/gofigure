@@ -2,8 +2,10 @@ package feature
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	iofs "io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -13,12 +15,12 @@ import (
 )
 
 type includeFeature struct {
-	fs             iofs.FS
+	fs             []iofs.FS
 	loadedContents map[string][]byte
 	loadedNodes    map[string]bool
 }
 
-func Include(fs iofs.FS) gofigure.Feature {
+func Include(fs ...iofs.FS) gofigure.Feature {
 	return &includeFeature{
 		fs:             fs,
 		loadedContents: map[string][]byte{},
@@ -71,11 +73,22 @@ func (f *includeFeature) Resolve(ctx context.Context, loader *gofigure.Loader, n
 		path := strings.TrimSpace(pathNode.Value())
 		contents, ok := f.loadedContents[path]
 		if !ok {
-			contents, err = iofs.ReadFile(f.fs, path)
-			if err != nil {
-				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
+			found := false
+			for _, fs := range f.fs {
+				contents, err = iofs.ReadFile(fs, path)
+				if errors.Is(err, os.ErrNotExist) {
+					continue
+				}
+				if err != nil {
+					return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to read file %q: %w", path, err))
+				}
+				found = true
+				f.loadedContents[path] = contents
+				break
 			}
-			f.loadedContents[path] = contents
+			if !found {
+				return nil, gofigure.NewNodeError(pathNode, fmt.Errorf("unable to find file %q: %w", path, os.ErrNotExist))
+			}
 		}
 
 		if !parse {

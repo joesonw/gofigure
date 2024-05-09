@@ -132,7 +132,7 @@ func (n *Node) GetDeep(path string) (*Node, error) {
 		return n, nil
 	}
 
-	paths, err := parseDotPath(path)
+	paths, err := ParseDotPath(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse path %q: %w", path, err)
 	}
@@ -142,13 +142,13 @@ func (n *Node) GetDeep(path string) (*Node, error) {
 		if current == nil {
 			return nil, nil
 		}
-		if p.key != "" { // map
-			current, err = current.GetMappingChild(p.key)
+		if p.Key != "" { // map
+			current, err = current.GetMappingChild(p.Key)
 			if err != nil {
 				return nil, err
 			}
 		} else { // slice
-			current, err = current.GetSequenceChild(p.index)
+			current, err = current.GetSequenceChild(p.Index)
 			if err != nil {
 				return nil, err
 			}

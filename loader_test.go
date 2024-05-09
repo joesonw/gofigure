@@ -51,4 +51,23 @@ name: John`))).To(BeNil())
 		Expect(value).To(Equal("hello world"))
 		Expect(loader.root.mappingNodes["app"].mappingNodes["value"].value).To(Equal("origin"))
 	})
+
+	It("should override", func() {
+		loader := New()
+		Expect(loader.Load("", []byte(`env: dev
+name:
+  first: John
+  last: Doe`))).To(BeNil())
+		Expect(loader.root.kind).To(Equal(yaml.MappingNode))
+		Expect(loader.root.mappingNodes["env"].value).To(Equal("dev"))
+		Expect(loader.root.mappingNodes["name"].mappingNodes["first"].value).To(Equal("John"))
+		Expect(loader.root.mappingNodes["name"].mappingNodes["last"].value).To(Equal("Doe"))
+
+		Expect(loader.Load("", []byte(`env: test
+name:
+  first: Jane`))).To(BeNil())
+		Expect(loader.root.mappingNodes["env"].value).To(Equal("test"))
+		Expect(loader.root.mappingNodes["name"].mappingNodes["first"].value).To(Equal("Jane"))
+		Expect(loader.root.mappingNodes["name"].mappingNodes["last"].value).To(Equal("Doe"))
+	})
 })

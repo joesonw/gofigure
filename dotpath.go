@@ -5,17 +5,17 @@ import (
 	"strconv"
 )
 
-type getPathPart struct {
-	key   string
-	index int
+type DotPath struct {
+	Key   string
+	Index int
 }
 
 //nolint:gocyclo
-func parseDotPath(path string) ([]*getPathPart, error) {
+func ParseDotPath(path string) ([]*DotPath, error) {
 	if path == "" {
 		return nil, nil
 	}
-	var paths []*getPathPart
+	var paths []*DotPath
 	curr := ""
 	isInBracket := false
 	if path[0] == '.' || path[len(path)-1] == '.' { // cannot start with dot
@@ -28,13 +28,13 @@ func parseDotPath(path string) ([]*getPathPart, error) {
 			}
 
 			if curr == "" { // no key specified
-				if len(paths) > 0 && paths[len(paths)-1].key == "" {
+				if len(paths) > 0 && paths[len(paths)-1].Key == "" {
 					continue
 				}
 				return nil, fmt.Errorf("%s: %w", path, ErrInvalidPath)
 			}
-			paths = append(paths, &getPathPart{
-				key: curr,
+			paths = append(paths, &DotPath{
+				Key: curr,
 			})
 			curr = ""
 			continue
@@ -45,8 +45,8 @@ func parseDotPath(path string) ([]*getPathPart, error) {
 				return nil, fmt.Errorf("%s: %w", path, ErrInvalidPath)
 			}
 			if curr != "" {
-				paths = append(paths, &getPathPart{
-					key: curr,
+				paths = append(paths, &DotPath{
+					Key: curr,
 				})
 				curr = ""
 			}
@@ -69,8 +69,8 @@ func parseDotPath(path string) ([]*getPathPart, error) {
 			}
 
 			isInBracket = false
-			paths = append(paths, &getPathPart{
-				index: index,
+			paths = append(paths, &DotPath{
+				Index: index,
 			})
 			curr = ""
 			continue
@@ -84,8 +84,8 @@ func parseDotPath(path string) ([]*getPathPart, error) {
 	}
 
 	if curr != "" {
-		paths = append(paths, &getPathPart{
-			key: curr,
+		paths = append(paths, &DotPath{
+			Key: curr,
 		})
 	}
 

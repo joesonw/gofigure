@@ -9,26 +9,26 @@ import (
 
 var _ = Describe("Dotpath", func() {
 	It("should parse path a.b[0].c[1].d", func() {
-		paths, err := parseDotPath("a.b[0].c[1].d")
+		paths, err := ParseDotPath("a.b[0].c[1].d")
 		Expect(err).To(BeNil())
 		Expect(paths).To(HaveLen(6))
-		Expect(paths[0].key).To(Equal("a"))
-		Expect(paths[1].key).To(Equal("b"))
-		Expect(paths[2].index).To(Equal(0))
-		Expect(paths[3].key).To(Equal("c"))
-		Expect(paths[4].index).To(Equal(1))
-		Expect(paths[5].key).To(Equal("d"))
+		Expect(paths[0].Key).To(Equal("a"))
+		Expect(paths[1].Key).To(Equal("b"))
+		Expect(paths[2].Index).To(Equal(0))
+		Expect(paths[3].Key).To(Equal("c"))
+		Expect(paths[4].Index).To(Equal(1))
+		Expect(paths[5].Key).To(Equal("d"))
 	})
 
 	It("should return nil if empty", func() {
-		paths, err := parseDotPath("")
+		paths, err := ParseDotPath("")
 		Expect(err).To(BeNil())
 		Expect(paths).To(BeNil())
 	})
 })
 
 var _ = DescribeTable("Dotpath failed scenarios", func(path string) {
-	_, err := parseDotPath(path)
+	_, err := ParseDotPath(path)
 	Expect(err).To(MatchError(path + ": invalid path"))
 },
 	dotPathEntry(".b"),

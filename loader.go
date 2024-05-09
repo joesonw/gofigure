@@ -36,10 +36,11 @@ func (l *Loader) Load(name string, contents []byte) error {
 
 	// root node is a document node, and the first child is a map holds all the values
 	fileNode := NewNode(yamlNode.Content[0], NodeFilepath(name))
-	name = strings.TrimSuffix(name, filepath.Ext(name))
-	names := strings.Split(name, string(filepath.Separator))
-	// nest the file with its path, e.g, config/app.yaml -> config.app
-	fileNode = PackNodeInNestedKeys(fileNode, names...)
+	if name != "" {
+		names := strings.Split(name, string(filepath.Separator))
+		// nest the file with its path, e.g, config/app.yaml -> config.app
+		fileNode = PackNodeInNestedKeys(fileNode, names...)
+	}
 
 	if l.root == nil {
 		l.root = fileNode
@@ -68,7 +69,7 @@ func (l *Loader) Get(ctx context.Context, path string, target any) error {
 func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 	current := l.root
 	if len(path) > 0 {
-		paths, err := parseDotPath(path)
+		paths, err := ParseDotPath(path)
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse path %q: %w", path, err)
 		}
@@ -77,13 +78,13 @@ func (l *Loader) GetNode(ctx context.Context, path string) (*Node, error) {
 			if current == nil {
 				break
 			}
-			if p.key != "" { // map
-				current, err = current.GetMappingChild(p.key)
+			if p.Key != "" { // map
+				current, err = current.GetMappingChild(p.Key)
 				if err != nil {
 					return nil, err
 				}
 			} else { // slice
-				current, err = current.GetSequenceChild(p.index)
+				current, err = current.GetSequenceChild(p.Index)
 				if err != nil {
 					return nil, err
 				}
@@ -161,7 +162,7 @@ func (l *Loader) resolve(ctx context.Context, node *Node) (resultNode *Node, ret
 			result, err := feature.Resolve(ctx, l, node)
 			if err != nil {
 				node.resolved = false
-				return nil, err
+				return nil, newNodeError(node, err)
 			}
 			node.resolvedNode = result
 			return node, nil
